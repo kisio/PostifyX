@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,10 +22,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Initialise environment variables
+env = environ.Env(
+    DEBUG=(bool, True)
+)
+# read .env file, if it exists
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env('DEBUG')
+
+# SECRET_KEY (required in production) - fallback provided for development only
+SECRET_KEY = env('DJANGO_SECRET_KEY', default='dev-secret-key-change-me')
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost', 'testserver'])
 
 
 # Application definition
@@ -32,6 +43,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'crispy_forms',
+    'crispy_bootstrap4',
     'blog.apps.BlogConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -127,15 +139,17 @@ MEDIA_URL='/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CRISPY_TEMPLATE_PACK= 'bootstrap4'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-LOGIN_REDIRECT_URL='blog-home'
+LOGIN_REDIRECT_URL = 'blog-home'
 
-LOGIN_URL='login' 
+LOGIN_URL = 'login'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+# Email configuration (can be set via .env)
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_USER', default=None)
+EMAIL_HOST_PASSWORD = env('EMAIL_PASS', default=None)
